@@ -1,129 +1,137 @@
 library(xlsx)
+# Импорт данных из CSV-файла
+setwd("C:/university/3_course/2_semester/big_data/labs/git") 
 
-data_xlsx <- read.xlsx("data.xlsx", 1)
-data_csv <- read.csv("data.csv")
+preferences <- read.csv("data_csv.csv")
 
-data_xlsx_stat <- data.frame(
-  Min = sapply(data_xlsx[,-1], min, na.rm = TRUE),
-  Max = sapply(data_xlsx[,-1], max, na.rm = TRUE),
-  Mean = sapply(data_xlsx[,-1], mean, na.rm = TRUE)
-)
-data_csv_stat <- data.frame(
-  Min = sapply(data_csv[,-1], min, na.rm = TRUE),
-  Max = sapply(data_csv[,-1], max, na.rm = TRUE),
-  Mean = sapply(data_csv[,-1], mean, na.rm = TRUE)
-)
+# гистогрммы для всех брендов
+par(mfrow = c(3, 4), mar = c(5, 5, 5, 5))
+
+sapply(names(preferences)[-1], function(col_name) {
+  hist(preferences[[col_name]],
+       main = col_name,
+       xlab = "Оценка",
+       ylab = "Количество",
+       xlim = c(1, 10),
+       breaks = seq(0.5, 10.5, by = 1),
+       col = "lightblue")
+})
+
+par(mfrow = c(1, 1))
 
 
-print(data.frame(Greater_07 = colSums(data_xlsx[,-1]>0.7), data_xlsx = colSums(data_xlsx[,-1]<0.3)))
-print(sort(apply(data_xlsx[,-1],2, mean),decreasing = TRUE))
-
-print(data.frame(Greater_07 = colSums(data_csv[,-1]>0.7), data_csv = colSums(data_csv[,-1]<0.3)))
-print(sort(apply(data_csv[,-1],2, mean),decreasing = TRUE))
-
-print(data_xlsx_stat)
-print(data_csv_stat)
-
-barplot(colMeans(data_xlsx[, -1], na.rm = TRUE), 
-        main = "Средние оценки телефонов", 
+# боксплот
+par(mar = c(12, 4, 4, 2))
+boxplot(preferences[, -1], 
+        main = "Боксплот оценок по брендам", 
+        xlab = "Жанр", 
         ylab = "Оценка", 
-        col = rainbow(10), 
-        las = 2)
-barplot(colMeans(data_xlsx[, -1], na.rm = TRUE), 
-        main = "Средние оценки телефонов (горизонтально)", 
-        horiz = TRUE, 
-        col = heat.colors(10), 
-        las = 1)
+        col = "lightgreen", 
+        las = 2)  # Поворот подписей на 90 градусов
 
-barplot(colMeans(data_csv[, -1], na.rm = TRUE), 
-        main = "Средние оценки фирм производителей машин", 
+par(mar = c(5, 4, 4, 2))
+
+
+# серединные меры
+middle_answers = summary(preferences[,-1])
+middle_answers
+
+
+# создание и обработка поднаборов
+# поднабор студентов > 7 Apple
+subdataset_high <- preferences[preferences$Apple > 9, ]
+subdataset_high
+# поднабор студентов < 6 Xiaomi
+subdataset_low <- preferences[preferences$Xiaomi < 6, ]
+subdataset_low
+# размерности поднаборов
+cat("Размерность subdataset_high:", dim(subdataset_high), "\n")
+cat("Размерность subdataset_low:", dim(subdataset_low), "\n")
+
+
+# гистограммы для subdataset_high
+par(mfrow = c(3, 4))
+sapply(names(subdataset_high)[-1], function(col_name) {
+  hist(subdataset_high[[col_name]],
+       main = col_name,
+       xlab = "Оценка",
+       ylab = "Количество",
+       xlim = c(1, 10),
+       breaks = seq(0.5, 10.5, by = 1),
+       col = "lightblue")
+})
+
+
+# гистограммы для subdataset_low
+par(mfrow = c(3, 4))
+sapply(names(subdataset_low)[-1], function(col_name) {
+  hist(subdataset_low[[col_name]],
+       main = col_name,
+       xlab = "Оценка",
+       ylab = "Количество",
+       xlim = c(1, 10),
+       breaks = seq(0.5, 10.5, by = 1),
+       col = "lightblue")
+})
+par(mfrow = c(1, 1))
+
+
+# Боксплот для subdataset_high
+par(mar = c(12, 4, 4, 2))
+boxplot(subdataset_high[, -1], 
+        main = "Боксплот для высоких оценок apple (> 9)", 
+        xlab = "Жанр", 
         ylab = "Оценка", 
-        col = rainbow(10), 
+        col = "skyblue", 
         las = 2)
-barplot(colMeans(data_csv[, -1], na.rm = TRUE), 
-        main = "Средние оценки фирм производителей машин (горизонтально)", 
-        horiz = TRUE, 
-        col = heat.colors(10), 
-        las = 1)
+par(mar = c(5, 4, 4, 2))
 
-# Формирование поднабора данных
-# Допустим, нас интересуют студенты, оценившие фирму Chevrolet более чем 0.3
-subdata_chevrolet <- subset(data_csv, Chevrolet > 0.3)
+# Боксплот для subdataset_low
+par(mar = c(12, 4, 4, 2))
+boxplot(subdataset_low[, -1], 
+        main = "Боксплот для низких оценок xiaomi (< 6)", 
+        xlab = "Жанр", 
+        ylab = "Оценка", 
+        col = "lightgreen", 
+        las = 2)
+par(mar = c(5, 4, 4, 2))
 
-# Выводим поднабор данных
-print("Поднабор данных: студенты с оценкой Chevrolet > 0.3")
-print(subdata_chevrolet)
 
-# Подсчёт размерностей поднабора данных
-dims <- dim(subdata_chevrolet)
-cat("Размерности поднабора (строки, столбцы):", dims[1], "x", dims[2], "\n")
+# серединные меры для subdataset_high
+cat("Серединные меры для subdataset_high:\n")
+print(summary(subdataset_high[, -1]))
 
-# Анализ поднабора данных
+# серединные меры для subdataset_low
+cat("\nСерединные меры для subdataset_low:\n")
+print(summary(subdataset_low[, -1]))
 
-# Гистограмма для оценок Chevrolet
-hist(subdata_chevrolet$Chevrolet,
-     main = "Гистограмма оценок Chevrolet (> 0.3)",
-     xlab = "Оценка",
-     col = "lightblue",
-     breaks = 5)
+# загружаем две таблицы и делаем слияние
+preferences_1 <- read.xlsx("data_part_one.xlsx",1)
 
-# Боксплот для оценок Chevrolet
-boxplot(subdata_chevrolet$Chevrolet,
-        main = "Боксплот оценок Chevrolet (> 0.3)",
-        ylab = "Оценка",
-        col = "orange")
+preferences_2 <- read.xlsx("data_part_two.xlsx",1)
 
-# Вычисление центральных мер
-mean_chevrolet <- mean(subdata_chevrolet$Chevrolet)
-median_chevrolet <- median(subdata_chevrolet$Chevrolet)
-sd_chevrolet <- sd(subdata_chevrolet$Chevrolet)
-min_chevrolet <- min(subdata_chevrolet$Chevrolet)
-max_chevrolet <- max(subdata_chevrolet$Chevrolet)
+# Слияние таблиц по столбцу "фамилия"
+preferences_1
+preferences_2
+preferences_merged <- merge(preferences_1, preferences_2, by = "Фамилия")
+preferences_merged
 
-cat("\nСтатистические показатели для оценок Chevrolet (> 0.3):\n")
-cat("Среднее значение:", mean_chevrolet, "\n")
-cat("Медиана:", median_chevrolet, "\n")
-cat("Стандартное отклонение:", sd_chevrolet, "\n")
-cat("Минимум:", min_chevrolet, "\n")
-cat("Максимум:", max_chevrolet, "\n")
+# загружаем еще таблицу и добавляем ее строки к нашей
+prefernces_3 <- read.xlsx("data_part_three.xlsx",1)
+prefernces_3
+preferences_merged <- rbind(preferences_merged, prefernces_3)
 
-# Формирование поднабора данных
-# Допустим, нас интересуют студенты, оценившие фирму Xiaomi более чем 0.3
-subdata_xiaomi <- subset(data_xlsx, Xiaomi > 0.3)
+# исключение переменных
+myvars <- names(preferences_merged) %in% c("Oppo", "Vivo") 
+new_answers <- preferences_merged[!myvars]
+remove(myvars)
 
-# Выводим поднабор данных
-print("Поднабор данных: студенты с оценкой Xiaomi > 0.3")
-print(subdata_xiaomi)
+new_answers <- preferences_merged[c(-2,-3)]
 
-# Подсчёт размерностей поднабора данных
-dims <- dim(subdata_xiaomi)
-cat("Размерности поднабора (строки, столбцы):", dims[1], "x", dims[2], "\n")
+# subset
+new_answers <- subset(preferences_merged, Apple > 9 | Xiaomi < 6, select=c(Фамилия, Samsung, Oneplus)) 
 
-# Анализ поднабора данных
 
-# Гистограмма для оценок Xiaomi
-hist(subdata_xiaomi$Xiaomi,
-     main = "Гистограмма оценок Xiaomi (> 0.3)",
-     xlab = "Оценка",
-     col = "lightblue",
-     breaks = 5)
 
-# Боксплот для оценок Xiaomi
-boxplot(subdata_xiaomi$Xiaomi,
-        main = "Боксплот оценок Xiaomi (> 0.3)",
-        ylab = "Оценка",
-        col = "orange")
 
-# Вычисление центральных мер
-mean_xiaomi <- mean(subdata_xiaomi$Xiaomi)
-median_xiaomi <- median(subdata_xiaomi$Xiaomi)
-sd_xiaomi <- sd(subdata_xiaomi$Xiaomi)
-min_xiaomi <- min(subdata_xiaomi$Xiaomi)
-max_xiaomi <- max(subdata_xiaomi$Xiaomi)
 
-cat("\nСтатистические показатели для оценок Xiaomi (> 0.3):\n")
-cat("Среднее значение:", mean_xiaomi, "\n")
-cat("Медиана:", median_xiaomi, "\n")
-cat("Стандартное отклонение:", sd_xiaomi, "\n")
-cat("Минимум:", min_xiaomi, "\n")
-cat("Максимум:", max_xiaomi, "\n")
